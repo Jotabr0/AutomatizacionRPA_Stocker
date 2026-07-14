@@ -1,0 +1,10 @@
+SET FilaIndexMarca TO 0
+LOOP FOREACH ItemMarca IN ExcelData
+    IF ItemMarca['Estado'] <> $'''COMPRADO''' THEN
+        IF ItemMarca['TiendaIntento'] = TiendaActual THEN
+            Variables.ModifyDataTableItem DataTable: ExcelData ColumnNameOrIndex: $'''Estado''' RowIndex: FilaIndexMarca Value: $'''COMPRADO'''
+        END
+    END
+    Variables.IncreaseVariable Value: FilaIndexMarca IncrementValue: 1
+END
+

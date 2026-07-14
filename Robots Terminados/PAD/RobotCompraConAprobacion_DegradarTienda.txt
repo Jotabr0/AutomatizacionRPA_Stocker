@@ -1,0 +1,18 @@
+IF CurrentItem['TiendaIntento'] = CurrentItem['Tienda ganadora'] THEN
+    IF CurrentItem['2ª Tienda'] <> $'''%''%''' THEN
+        Variables.ModifyDataTableItem DataTable: ExcelData ColumnNameOrIndex: $'''TiendaIntento''' RowIndex: FilaIndex Value: CurrentItem['2ª Tienda']
+    ELSE
+        Variables.ModifyDataTableItem DataTable: ExcelData ColumnNameOrIndex: $'''Estado''' RowIndex: FilaIndex Value: $'''FALLIDO'''
+        Variables.ModifyDataTableItem DataTable: ExcelData ColumnNameOrIndex: $'''TiendaIntento''' RowIndex: FilaIndex Value: $'''-'''
+    END
+ELSE IF CurrentItem['TiendaIntento'] = CurrentItem['2ª Tienda'] THEN
+    IF CurrentItem['3ª Tienda'] <> $'''%''%''' THEN
+        Variables.ModifyDataTableItem DataTable: ExcelData ColumnNameOrIndex: $'''TiendaIntento''' RowIndex: FilaIndex Value: CurrentItem['3ª Tienda']
+    ELSE
+        Variables.ModifyDataTableItem DataTable: ExcelData ColumnNameOrIndex: $'''Estado''' RowIndex: FilaIndex Value: $'''FALLIDO'''
+        Variables.ModifyDataTableItem DataTable: ExcelData ColumnNameOrIndex: $'''TiendaIntento''' RowIndex: FilaIndex Value: $'''-'''
+    END
+ELSE
+    Variables.ModifyDataTableItem DataTable: ExcelData ColumnNameOrIndex: $'''Estado''' RowIndex: FilaIndex Value: $'''FALLIDO'''
+    Variables.ModifyDataTableItem DataTable: ExcelData ColumnNameOrIndex: $'''TiendaIntento''' RowIndex: FilaIndex Value: $'''-'''
+END

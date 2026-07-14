@@ -1,0 +1,5 @@
+Se montan 2 Robots diferentes en PAD. 
+
+Perfomer - Es el que recibe de n8n los productos requeridos para comprar
+Robot Compra - Este se activa todos los días a las 5 de la tarde y lo primero que hace es mandar un mensaje al responsable de compras con todas las compras pendientes, si aprueba se activa todo el flujo. 
+Para montarlo hay que copiar todo lo que viene el el txt de Main en Main y después crear dos subflujos llamados DegradarTienda y MarcarComprado y copiar el txt correspondiente

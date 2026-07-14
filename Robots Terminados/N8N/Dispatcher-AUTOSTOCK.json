@@ -1,0 +1,213 @@
+{
+  "name": "Dispatcher-AUTOSTOCK",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "autostock",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f9ba997b-a386-4921-a477-84deea484b6d",
+      "name": "Webhook",
+      "webhookId": "b5020d9f-6ad9-4d91-af6b-66ebc7f4e232"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Accedemos al JSON del primer elemento que entra del webhook\nconst inputData = $input.first().json;\n\n// 2. Apuntamos a la ruta exacta según tu estructura: dentro de 'body'\nconst articulos = inputData.body ? inputData.body.resumen_extraccion : null;\n\n// 3. Verificación de seguridad por si la lista no existe o no es un array\nif (!articulos || !Array.isArray(articulos)) {\n  return [];\n}\n\n// 4. Mapeamos los artículos al formato de salida individual de n8n\nreturn articulos.map(articulo => {\n  return {\n    json: {\n      id: articulo.id,\n      nombre: articulo.nombre,\n      cantidad_a_restar: articulo.cantidad\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "de5caa89-7bc4-4fe0-bfb9-ef115ebff918",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE inventario_oficina\nSET stock = stock - {{ $json.cantidad_a_restar }}\nWHERE id = '{{ $json.id }}'\nRETURNING id, nombre, stock, min, max, categoria;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        432,
+        0
+      ],
+      "id": "ae570314-e395-49ab-a38e-ed6700067d88",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "BjaZppFbKW7ug3U0",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b8fcc142-2736-4666-977c-0e1f19b6670e",
+              "leftValue": "={{ $json.stock }}",
+              "rightValue": "={{ $json.min }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            },
+            {
+              "id": "65a98066-6657-4a70-8b9c-6b95d66933da",
+              "leftValue": "={{ $json.stock }}",
+              "rightValue": "={{ $json.min * 1.10}}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        640,
+        0
+      ],
+      "id": "a6e9b586-2d43-4391-b59b-ab4b9886b7ac",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e53a60ed-2a7f-4b00-8eb4-02859795434d",
+              "name": "cantidad_a_comprar",
+              "value": "={{ $json.max - $json.stock}}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "include": "selected",
+        "includeFields": "id,nombre,cantidad_a_comprar",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        -96
+      ],
+      "id": "ce7b102b-25ad-48b9-a784-f6d1630a72cd",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://TU_ENTORNO_POWER_AUTOMATE_PRODUCCION.com/triggers/manual/paths/invoke?api-version=1&sig=TU_FIRMA_DE_SEGURIDAD_AQUI",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=\n  {\n    \"id\": \"{{ $json.id }}\",\n    \"nombre\": \"{{ $json.nombre }}\",\n    \"cantidad_a_comprar\": {{ $json.cantidad_a_comprar }}\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1056,
+        -96
+      ],
+      "id": "dc1569fd-ecf7-48bb-b063-3005e3510f8f",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5895deff-5735-412d-a876-a1e7f781acc0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "189c6fe7ce293e0d1b74249adc7a87526258201a04bca6dd6180cdae613d3607"
+  },
+  "id": "SJxAKDQikQVSjyIC",
+  "tags": []
+}
